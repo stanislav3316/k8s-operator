@@ -47,16 +47,17 @@ type DummyReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	dummy := &homeworkv1alpha1.Dummy{}
 	err := r.Client.Get(ctx, req.NamespacedName, dummy)
 
 	if err != nil {
-		log.Log.Error(err, "error during dummy processing")
-	} else {
-		log.Log.Info(dummy.Spec.Message)
+		logger.Error(err, "failed to get Dummy resource")
+		return ctrl.Result{}, err
 	}
+
+	logger.Info("Dummy instance:", "Got name - ", dummy.Name, " namespace - ", req.Namespace, "msg - ", dummy.Spec.Message)
 
 	return ctrl.Result{}, nil
 }
