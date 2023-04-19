@@ -1,0 +1,6 @@
+apiVersion: homework.anynines.com/v1alpha1
+kind: Dummy
+metadata:
+  name: dummy-sample
+spec:
+  message: 'Hello world!'
