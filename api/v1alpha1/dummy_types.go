@@ -36,6 +36,7 @@ type DummySpec struct {
 type DummyStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	SpecEcho string `json:"specEcho,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -46,7 +47,8 @@ type Dummy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec DummySpec `json:"spec,omitempty"`
+	Spec   DummySpec   `json:"spec,omitempty"`
+	Status DummyStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true

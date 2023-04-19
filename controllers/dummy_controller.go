@@ -59,6 +59,14 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	logger.Info("Dummy instance:", "Got name - ", dummy.Name, " namespace - ", req.Namespace, "msg - ", dummy.Spec.Message)
 
+	dummy.Status.SpecEcho = dummy.Spec.Message
+	if err := r.Client.Status().Update(ctx, dummy); err != nil {
+		logger.Error(err, "Failed to update Dummy status")
+		return ctrl.Result{}, err
+	}
+
+	logger.Info("Successfully updated Dummy status")
+
 	return ctrl.Result{}, nil
 }
 
