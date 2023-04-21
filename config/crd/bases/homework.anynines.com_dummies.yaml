@@ -43,6 +43,8 @@ spec:
           status:
             description: DummyStatus defines the observed state of Dummy
             properties:
+              podStatus:
+                type: string
               specEcho:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying

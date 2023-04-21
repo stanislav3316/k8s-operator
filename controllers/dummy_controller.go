@@ -18,6 +18,10 @@ package controllers
 
 import (
 	"context"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -67,7 +71,54 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	logger.Info("Successfully updated Dummy status")
 
+	// Create a Pod for the Dummy if it doesn't exist
+	pod := &v1.Pod{}
+	err = r.Client.Get(ctx, types.NamespacedName{Name: dummy.Name}, pod)
+	if err != nil && errors.IsNotFound(err) {
+		pod = newPod(dummy)
+		if err := r.Client.Create(ctx, pod); err != nil {
+			log.Log.Error(err, "unable to create Pod for Dummy", "pod", pod)
+			return ctrl.Result{}, err
+		}
+		log.Log.Info("created Pod for Dummy", "pod", pod)
+		return ctrl.Result{}, nil
+	} else if err != nil {
+		log.Log.Error(err, "unable to fetch Pod for Dummy")
+		return ctrl.Result{}, err
+	}
+
+	// Delete the Pod if the Dummy is being deleted
+	if !dummy.ObjectMeta.DeletionTimestamp.IsZero() {
+		err = r.Client.Delete(ctx, pod)
+		if err != nil {
+			log.Log.Error(err, "unable to delete Pod for Dummy", "pod", pod)
+			return ctrl.Result{}, err
+		}
+		log.Log.Info("deleted Pod for Dummy", "pod", pod)
+		return ctrl.Result{}, nil
+	}
+
 	return ctrl.Result{}, nil
+}
+
+func newPod(dummy *homeworkv1alpha1.Dummy) *v1.Pod {
+	pod := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dummy.Name,
+			Namespace: dummy.Namespace,
+			Labels:    map[string]string{"app": "dummy", "dummy-name": dummy.Name},
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+				},
+			},
+		},
+	}
+
+	return pod
 }
 
 // SetupWithManager sets up the controller with the Manager.
