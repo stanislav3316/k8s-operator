@@ -64,6 +64,11 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	logger.Info("Dummy instance:", "Got name - ", dummy.Name, " namespace - ", req.Namespace, "msg - ", dummy.Spec.Message)
 
 	dummy.Status.SpecEcho = dummy.Spec.Message
+
+	if dummy.Status.PodStatus != "Running" {
+		dummy.Status.PodStatus = "Pending"
+	}
+
 	if err := r.Client.Status().Update(ctx, dummy); err != nil {
 		logger.Error(err, "Failed to update Dummy status")
 		return ctrl.Result{}, err
@@ -80,6 +85,13 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			log.Log.Error(err, "unable to create Pod for Dummy", "pod", pod)
 			return ctrl.Result{}, err
 		}
+
+		dummy.Status.PodStatus = "Running"
+		if err := r.Client.Status().Update(ctx, dummy); err != nil {
+			logger.Error(err, "Failed to update Dummy status")
+			return ctrl.Result{}, err
+		}
+
 		log.Log.Info("created Pod for Dummy", "pod", pod)
 		return ctrl.Result{}, nil
 	} else if err != nil {
