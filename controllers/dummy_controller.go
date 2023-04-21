@@ -65,10 +65,6 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	dummy.Status.SpecEcho = dummy.Spec.Message
 
-	if dummy.Status.PodStatus != "Running" {
-		dummy.Status.PodStatus = "Pending"
-	}
-
 	if err := r.Client.Status().Update(ctx, dummy); err != nil {
 		logger.Error(err, "Failed to update Dummy status")
 		return ctrl.Result{}, err
@@ -80,7 +76,7 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	pod := &v1.Pod{}
 	err = r.Client.Get(ctx, types.NamespacedName{Name: dummy.Name}, pod)
 	if err != nil && errors.IsNotFound(err) {
-		pod = newPod(dummy)
+		pod = r.newPod(dummy)
 		if err := r.Client.Create(ctx, pod); err != nil {
 			log.Log.Error(err, "unable to create Pod for Dummy", "pod", pod)
 			return ctrl.Result{}, err
@@ -99,6 +95,12 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, err
 	}
 
+	dummy.Status.PodStatus = string(pod.Status.Phase)
+	if err := r.Client.Status().Update(ctx, dummy); err != nil {
+		logger.Error(err, "Failed to update Dummy status")
+		return ctrl.Result{}, err
+	}
+
 	// Delete the Pod if the Dummy is being deleted
 	if !dummy.ObjectMeta.DeletionTimestamp.IsZero() {
 		err = r.Client.Delete(ctx, pod)
@@ -113,7 +115,7 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	return ctrl.Result{}, nil
 }
 
-func newPod(dummy *homeworkv1alpha1.Dummy) *v1.Pod {
+func (r *DummyReconciler) newPod(dummy *homeworkv1alpha1.Dummy) *v1.Pod {
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dummy.Name,
@@ -130,6 +132,7 @@ func newPod(dummy *homeworkv1alpha1.Dummy) *v1.Pod {
 		},
 	}
 
+	_ = ctrl.SetControllerReference(dummy, pod, r.Scheme)
 	return pod
 }
 
@@ -137,5 +140,6 @@ func newPod(dummy *homeworkv1alpha1.Dummy) *v1.Pod {
 func (r *DummyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&homeworkv1alpha1.Dummy{}).
+		Owns(&v1.Pod{}).
 		Complete(r)
 }
