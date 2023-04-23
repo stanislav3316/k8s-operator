@@ -38,6 +38,7 @@ type DummyReconciler struct {
 }
 
 //+kubebuilder:rbac:groups=homework.anynines.com,resources=dummies,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=homework.anynines.com,resources=pods,namespace=d-op-system,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=homework.anynines.com,resources=dummies/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=homework.anynines.com,resources=dummies/finalizers,verbs=update
 
