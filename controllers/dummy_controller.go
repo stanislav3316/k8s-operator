@@ -38,7 +38,8 @@ type DummyReconciler struct {
 }
 
 //+kubebuilder:rbac:groups=homework.anynines.com,resources=dummies,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=homework.anynines.com,resources=pods,namespace=d-op-system,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete;
 //+kubebuilder:rbac:groups=homework.anynines.com,resources=dummies/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=homework.anynines.com,resources=dummies/finalizers,verbs=update
 
@@ -75,7 +76,7 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	// Create a Pod for the Dummy if it doesn't exist
 	pod := &v1.Pod{}
-	err = r.Client.Get(ctx, types.NamespacedName{Name: dummy.Name}, pod)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: dummy.Name, Namespace: dummy.Namespace}, pod)
 	if err != nil && errors.IsNotFound(err) {
 		pod = r.newPod(dummy)
 		if err := r.Client.Create(ctx, pod); err != nil {
