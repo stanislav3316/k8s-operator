@@ -58,7 +58,10 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	dummy := &homeworkv1alpha1.Dummy{}
 	err := r.Client.Get(ctx, req.NamespacedName, dummy)
 
-	if err != nil {
+	if err != nil && errors.IsNotFound(err) {
+		logger.Info("Dummy resource not found")
+		return ctrl.Result{}, nil
+	} else if err != nil {
 		logger.Error(err, "failed to get Dummy resource")
 		return ctrl.Result{}, err
 	}
