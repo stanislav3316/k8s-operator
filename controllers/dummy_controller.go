@@ -87,12 +87,6 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			return ctrl.Result{}, err
 		}
 
-		dummy.Status.PodStatus = "Running"
-		if err := r.Client.Status().Update(ctx, dummy); err != nil {
-			logger.Error(err, "Failed to update Dummy status")
-			return ctrl.Result{}, err
-		}
-
 		log.Log.Info("created Pod for Dummy", "pod", pod)
 		return ctrl.Result{}, nil
 	} else if err != nil {
@@ -104,17 +98,6 @@ func (r *DummyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	if err := r.Client.Status().Update(ctx, dummy); err != nil {
 		logger.Error(err, "Failed to update Dummy status")
 		return ctrl.Result{}, err
-	}
-
-	// Delete the Pod if the Dummy is being deleted
-	if !dummy.ObjectMeta.DeletionTimestamp.IsZero() {
-		err = r.Client.Delete(ctx, pod)
-		if err != nil {
-			log.Log.Error(err, "unable to delete Pod for Dummy", "pod", pod)
-			return ctrl.Result{}, err
-		}
-		log.Log.Info("deleted Pod for Dummy", "pod", pod)
-		return ctrl.Result{}, nil
 	}
 
 	return ctrl.Result{}, nil
